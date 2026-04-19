@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict - Credit Risk Evaluation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #1a2632;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .navbar-brand, .nav-link {
+            color: #ecf0f1 !important;
+        }
+        .nav-link:hover {
+            color: #3498db !important;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            background: #ecf0f1;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #1a2632, #2c3e50);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 15px 20px;
+            font-weight: bold;
+        }
+        .risk-meter {
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            background-color: #ecf0f1;
+        }
+        .risk-fill {
+            height: 100%;
+            transition: width 1s ease;
+            background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c, #c0392b);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1a2632, #2c3e50);
+            border: none;
+            padding: 10px 30px;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52,152,219,0.4);
+        }
+        .footer {
+            background-color: #1a2632;
+            color: #ecf0f1;
+            text-align: center;
+            padding: 20px;
+            margin-top: 50px;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52,152,219,0.25);
+        }
+        label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        h1 {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            color: #ecf0f1;
+        }
+        .bg-light {
+            background-color: #ffffff !important;
+        }
+        .list-group-item {
+            background-color: #ffffff;
+        }
+        .ensemble-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 5px;
+            font-size: 0.85rem;
+        }
+        .feature-analysis {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+        .feature-analysis:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #ecf0f1;
+        }
+        .risk-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .risk-high {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .risk-medium {
+            background-color: #f39c12;
+            color: white;
+        }
+        .risk-low {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .risk-very-high {
+            background-color: #8e44ad;
+            color: white;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        /* SHAP Styles */
+        .shap-positive {
+            color: #e74c3c;
+        }
+        .shap-negative {
+            color: #2ecc71;
+        }
+        .shap-bar-positive {
+            background: linear-gradient(90deg, #ff6b6b, #e74c3c);
+        }
+        .shap-bar-negative {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+        }
+        .shap-contribution-bar {
+            height: 6px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line"></i> CreditRisk Evaluator
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/model-results">Model Results</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/predict">Predict</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <h1 class="text-center text-white mb-4">
+            <i class="fas fa-calculator"></i> Credit Risk Prediction
+        </h1>
+        
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-user"></i> Applicant Information</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                        {% endif %}
+                        
+                        <form method="POST">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Loan Amount ($)</label>
+                                    <input type="number" class="form-control" name="loan_amount" 
+                                           step="1000" min="1000" max="100000" required
+                                           placeholder="e.g., 25000">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Interest Rate (%)</label>
+                                    <input type="number" class="form-control" name="interest_rate" 
+                                           step="0.1" min="0" max="30" required
+                                           placeholder="e.g., 12.5">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Annual Income ($)</label>
+                                    <input type="number" class="form-control" name="annual_income" 
+                                           step="1000" min="0" max="500000" required
+                                           placeholder="e.g., 75000">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Employment Length</label>
+                                    <select class="form-control" name="employment_length" required>
+                                        <option>&lt; 1 year</option>
+                                        <option>1 year</option>
+                                        <option>2 years</option>
+                                        <option>3 years</option>
+                                        <option>4 years</option>
+                                        <option>5 years</option>
+                                        <option>6 years</option>
+                                        <option>7 years</option>
+                                        <option>8 years</option>
+                                        <option>9 years</option>
+                                        <option>10+ years</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Credit Score (300-850)</label>
+                                    <input type="number" class="form-control" name="credit_score" 
+                                           step="10" min="300" max="850" required
+                                           placeholder="e.g., 680">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Debt-to-Income Ratio (%)</label>
+                                    <input type="number" class="form-control" name="debt_to_income" 
+                                           step="1" min="0" max="100" required
+                                           placeholder="e.g., 35">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Open Credit Lines</label>
+                                    <input type="number" class="form-control" name="num_credit_lines" 
+                                           step="1" min="0" max="30" required
+                                           placeholder="e.g., 5">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Delinquencies (2 years)</label>
+                                    <input type="number" class="form-control" name="delinquencies" 
+                                           step="1" min="0" max="10" required
+                                           placeholder="e.g., 0">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Revolving Utilization (%)</label>
+                                    <input type="number" class="form-control" name="revolving_utilization" 
+                                           step="1" min="0" max="100" required
+                                           placeholder="e.g., 45">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Total Credit Lines</label>
+                                    <input type="number" class="form-control" name="total_credit_lines" 
+                                           step="1" min="1" max="50" required
+                                           placeholder="e.g., 15">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Credit Inquiries (last 6 months)</label>
+                                    <input type="number" class="form-control" name="credit_inquiries" 
+                                           step="1" min="0" max="20" value="1"
+                                           placeholder="e.g., 1">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Mortgage Accounts</label>
+                                    <input type="number" class="form-control" name="mortgage_accounts" 
+                                           step="1" min="0" max="5" value="0"
+                                           placeholder="e.g., 0">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Loan Purpose</label>
+                                    <select class="form-control" name="loan_purpose" required>
+                                        <option>debt_consolidation</option>
+                                        <option>credit_card</option>
+                                        <option>home_improvement</option>
+                                        <option>medical</option>
+                                        <option>business</option>
+                                        <option>educational</option>
+                                        <option>major_purchase</option>
+                                        <option>small_business</option>
+                                        <option>vacation</option>
+                                        <option>other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Home Ownership</label>
+                                    <select class="form-control" name="home_ownership" required>
+                                        <option>RENT</option>
+                                        <option>MORTGAGE</option>
+                                        <option>OWN</option>
+                                        <option>OTHER</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-chart-line"></i> Predict Default Risk
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if prediction is defined %}
+        <div class="row mt-4">
+            <div class="col-md-10 mx-auto">
+                <div class="card fade-in">
+                    <div class="card-header bg-{{ color }}">
+                        <h5 class="mb-0"><i class="fas fa-chart-line"></i> Risk Assessment Result</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-secondary mb-3">
+                            <i class="fas fa-robot"></i> 
+                            <strong>Using Best Model: {{ best_model }}</strong> 
+                            <span class="text-muted">(Selected from 10 models based on ROC-AUC score)</span>
+                        </div>
+                        
+                        <div class="text-center mb-4">
+                            <h2 class="display-4">{{ risk_level }}</h2>
+                            <div class="risk-meter mt-3">
+                                <div class="risk-fill" style="width: {{ risk_score }}%;"></div>
+                            </div>
+                            <p class="mt-2">Default Risk Score: <strong>{{ "%.1f"|format(risk_score) }}%</strong></p>
+                            <p class="text-muted">Probability of Default: {{ "%.2f"|format(probability * 100) }}%</p>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> {{ recommendation }}
+                        </div>
+                        
+                        <!-- ============================================================ -->
+                        <!-- SHAP EXPLANATION SECTION - ADDED FOR EXPLAINABLE AI          -->
+                        <!-- ============================================================ -->
+                        {% if shap_contributions and shap_available %}
+                        <div class="mt-4">
+                            <h5><i class="fas fa-chart-simple"></i>  SHAP Explanation - Why This Prediction?</h5>
+                            <p class="text-muted small">SHAP values show how each feature contributed to the final risk score</p>
+                            
+                            <div class="alert alert-secondary">
+                                <small>
+                                    <strong> Base Risk:</strong> 18.24% (average default rate in dataset)<br>
+                                    <strong> Final Risk:</strong> {{ "%.1f"|format(risk_score) }}%<br>
+                                    <strong> Total Change:</strong> 
+                                    {% if risk_score - 18.24 > 0 %}
+                                        <span class="text-danger">+{{ "%.1f"|format(risk_score - 18.24) }}%</span>
+                                    {% else %}
+                                        <span class="text-success">{{ "%.1f"|format(risk_score - 18.24) }}%</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            
+                            <!-- Feature Contributions - Two Column Layout -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-light mb-2">
+                                        <div class="card-body py-2">
+                                            <h6 class="text-danger"> INCREASED Risk (Pushed toward DEFAULT)</h6>
+                                            <hr class="my-1">
+                                            {% set positive_count = 0 %}
+                                            {% for item in shap_contributions %}
+                                                {% if item.direction == 'positive' and item.abs_contribution > 0.005 %}
+                                                {% set positive_count = positive_count + 1 %}
+                                                <div class="mb-2">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span>
+                                                            <strong>{{ item.feature.replace('_', ' ').title() }}</strong>
+                                                            <small class="text-muted">({{ "%.2f"|format(item.value) }})</small>
+                                                        </span>
+                                                        <span class="text-danger fw-bold">+{{ "%.1f"|format(item.contribution * 100) }}%</span>
+                                                    </div>
+                                                    <div class="progress" style="height: 4px;">
+                                                        <div class="progress-bar bg-danger" style="width: {{ (item.contribution * 100) }}%;"></div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% if positive_count == 0 %}
+                                                <p class="text-muted small mb-0">No features increased risk</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card bg-light mb-2">
+                                        <div class="card-body py-2">
+                                            <h6 class="text-success"> DECREASED Risk (Pushed toward NON-DEFAULT)</h6>
+                                            <hr class="my-1">
+                                            {% set negative_count = 0 %}
+                                            {% for item in shap_contributions %}
+                                                {% if item.direction == 'negative' and item.abs_contribution > 0.005 %}
+                                                {% set negative_count = negative_count + 1 %}
+                                                <div class="mb-2">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span>
+                                                            <strong>{{ item.feature.replace('_', ' ').title() }}</strong>
+                                                            <small class="text-muted">({{ "%.2f"|format(item.value) }})</small>
+                                                        </span>
+                                                        <span class="text-success fw-bold">{{ "%.1f"|format(item.contribution * 100) }}%</span>
+                                                    </div>
+                                                    <div class="progress" style="height: 4px;">
+                                                        <div class="progress-bar bg-success" style="width: {{ (item.contribution|abs * 100) }}%;"></div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% if negative_count == 0 %}
+                                                <p class="text-muted small mb-0">No features decreased risk</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Top 5 Contributors Summary -->
+                            <div class="alert alert-info mt-2">
+                                <i class="fas fa-lightbulb"></i> <strong> Key Drivers of This Decision:</strong>
+                                <ul class="mb-0 mt-2">
+                                    {% for item in shap_contributions[:5] %}
+                                    <li>
+                                        <strong>{{ item.feature.replace('_', ' ').title() }}</strong> 
+                                        {% if item.direction == 'positive' %}
+                                            <span class="text-danger">increased</span>
+                                        {% else %}
+                                            <span class="text-success">decreased</span>
+                                        {% endif %}
+                                        risk by <strong>{{ "%.1f"|format(item.abs_contribution * 100) }}%</strong>
+                                        <small class="text-muted">(value: {{ "%.2f"|format(item.value) }})</small>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        {% elif shap_available is defined and not shap_available %}
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle"></i> SHAP explanations not available. 
+                            <small>Install with: <code>pip install shap</code></small>
+                        </div>
+                        {% endif %}
+                        <!-- ============================================================ -->
+                        <!-- END OF SHAP EXPLANATION SECTION                               -->
+                        <!-- ============================================================ -->
+                        
+                        <!-- Feature-wise Risk Analysis -->
+                        <h5 class="mt-4 mb-3"><i class="fas fa-chart-bar"></i> Feature-wise Risk Analysis</h5>
+                        
+                        <!-- Credit Score Analysis -->
+                        <div class="feature-analysis">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div><i class="fas fa-chart-line"></i> <strong>Credit Score</strong> <span class="text-muted ms-2">(300-850)</span></div>
+                                <div><span class="badge {% if applicant_data.credit_score >= 700 %}bg-success{% elif applicant_data.credit_score >= 600 %}bg-warning{% else %}bg-danger{% endif %}">{{ applicant_data.credit_score }}</span></div>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar {% if applicant_data.credit_score >= 700 %}bg-success{% elif applicant_data.credit_score >= 600 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ ((applicant_data.credit_score - 300) / 550 * 100) }}%"></div>
+                            </div>
+                            <div class="mt-2">
+                                {% if applicant_data.credit_score >= 750 %}
+                                <span class="risk-badge risk-low">Excellent - Very Low Risk</span>
+                                {% elif applicant_data.credit_score >= 700 %}
+                                <span class="risk-badge risk-low">Good - Low Risk</span>
+                                {% elif applicant_data.credit_score >= 650 %}
+                                <span class="risk-badge risk-medium">Fair - Medium Risk</span>
+                                {% elif applicant_data.credit_score >= 600 %}
+                                <span class="risk-badge risk-medium">Poor - Medium Risk</span>
+                                {% else %}
+                                <span class="risk-badge risk-high">Very Poor - High Risk</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Debt-to-Income Analysis -->
+                        <div class="feature-analysis">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div><i class="fas fa-chart-line"></i> <strong>Debt-to-Income Ratio</strong> <span class="text-muted ms-2">(DTI %)</span></div>
+                                <div><span class="badge {% if applicant_data.debt_to_income <= 20 %}bg-success{% elif applicant_data.debt_to_income <= 35 %}bg-warning{% else %}bg-danger{% endif %}">{{ applicant_data.debt_to_income }}%</span></div>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar {% if applicant_data.debt_to_income <= 20 %}bg-success{% elif applicant_data.debt_to_income <= 35 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ applicant_data.debt_to_income }}%"></div>
+                            </div>
+                            <div class="mt-2">
+                                {% if applicant_data.debt_to_income <= 20 %}
+                                <span class="risk-badge risk-low">Low DTI - Manageable Debt</span>
+                                {% elif applicant_data.debt_to_income <= 35 %}
+                                <span class="risk-badge risk-medium">Moderate DTI - Monitor</span>
+                                {% else %}
+                                <span class="risk-badge risk-high">High DTI - Overleveraged</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Interest Rate Analysis -->
+                        <div class="feature-analysis">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div><i class="fas fa-percent"></i> <strong>Interest Rate</strong> <span class="text-muted ms-2">(Annual %)</span></div>
+                                <div><span class="badge {% if applicant_data.interest_rate <= 10 %}bg-success{% elif applicant_data.interest_rate <= 15 %}bg-warning{% else %}bg-danger{% endif %}">{{ applicant_data.interest_rate }}%</span></div>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar {% if applicant_data.interest_rate <= 10 %}bg-success{% elif applicant_data.interest_rate <= 15 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ (applicant_data.interest_rate / 25 * 100) }}%"></div>
+                            </div>
+                            <div class="mt-2">
+                                {% if applicant_data.interest_rate <= 10 %}
+                                <span class="risk-badge risk-low">Low Rate - Favorable Terms</span>
+                                {% elif applicant_data.interest_rate <= 15 %}
+                                <span class="risk-badge risk-medium">Moderate Rate - Average Risk</span>
+                                {% else %}
+                                <span class="risk-badge risk-high">High Rate - Subprime Risk</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Delinquencies Analysis -->
+                        <div class="feature-analysis">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div><i class="fas fa-clock"></i> <strong>Past Delinquencies</strong> <span class="text-muted ms-2">(Last 2 years)</span></div>
+                                <div><span class="badge {% if applicant_data.delinquencies == 0 %}bg-success{% elif applicant_data.delinquencies == 1 %}bg-warning{% else %}bg-danger{% endif %}">{{ applicant_data.delinquencies }}</span></div>
+                            </div>
+                            <div class="mt-2">
+                                {% if applicant_data.delinquencies == 0 %}
+                                <span class="risk-badge risk-low">Clean Payment History</span>
+                                {% elif applicant_data.delinquencies == 1 %}
+                                <span class="risk-badge risk-medium">Minor Delinquency</span>
+                                {% else %}
+                                <span class="risk-badge risk-high">Multiple Delinquencies</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Revolving Utilization Analysis -->
+                        <div class="feature-analysis">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div><i class="fas fa-credit-card"></i> <strong>Revolving Utilization</strong> <span class="text-muted ms-2">(% of available credit)</span></div>
+                                <div><span class="badge {% if applicant_data.revolving_utilization <= 30 %}bg-success{% elif applicant_data.revolving_utilization <= 50 %}bg-warning{% else %}bg-danger{% endif %}">{{ applicant_data.revolving_utilization }}%</span></div>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar {% if applicant_data.revolving_utilization <= 30 %}bg-success{% elif applicant_data.revolving_utilization <= 50 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ applicant_data.revolving_utilization }}%"></div>
+                            </div>
+                            <div class="mt-2">
+                                {% if applicant_data.revolving_utilization <= 30 %}
+                                <span class="risk-badge risk-low">Low Utilization - Good</span>
+                                {% elif applicant_data.revolving_utilization <= 50 %}
+                                <span class="risk-badge risk-medium">Moderate Utilization</span>
+                                {% else %}
+                                <span class="risk-badge risk-high">High Utilization - Overextended</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Employment Length Analysis -->
+                        <div class="feature-analysis">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div><i class="fas fa-briefcase"></i> <strong>Employment Length</strong> <span class="text-muted ms-2">(Job Stability)</span></div>
+                                <div><span class="badge {% if applicant_data.employment_length in ['5 years', '6 years', '7 years', '8 years', '9 years', '10+ years'] %}bg-success{% elif applicant_data.employment_length in ['2 years', '3 years', '4 years'] %}bg-warning{% else %}bg-danger{% endif %}">{{ applicant_data.employment_length }}</span></div>
+                            </div>
+                            <div class="mt-2">
+                                {% if applicant_data.employment_length in ['5 years', '6 years', '7 years', '8 years', '9 years', '10+ years'] %}
+                                <span class="risk-badge risk-low">Stable Employment</span>
+                                {% elif applicant_data.employment_length in ['2 years', '3 years', '4 years'] %}
+                                <span class="risk-badge risk-medium">Moderate Stability</span>
+                                {% else %}
+                                <span class="risk-badge risk-high">Limited Employment</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Risk Summary -->
+                        <div class="alert alert-secondary mt-4">
+                            <h6><i class="fas fa-chart-simple"></i> Risk Summary</h6>
+                            <div class="row mt-3">
+                                <div class="col-md-4 text-center">
+                                    <div class="metric-card"><div class="metric-value text-{{ color }}">{{ "%.1f"|format(risk_score) }}%</div><small>Risk Score</small></div>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="metric-card"><div class="metric-value">{{ "%.2f"|format(probability * 100) }}%</div><small>Default Probability</small></div>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="metric-card"><div class="metric-value">{{ "%.1f"|format((1 - probability) * 100) }}%</div><small>Confidence Level</small></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Ensemble Predictions -->
+                        {% if all_predictions %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-layer-group"></i> All Model Predictions (Ensemble View)</h6>
+                            <div class="row">
+                                {% for model_name, pred_prob in all_predictions.items() %}
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="ensemble-card text-center">
+                                        <small class="text-muted">{{ model_name }}</small><br>
+                                        <strong class="{% if pred_prob and pred_prob > 0.5 %}text-danger{% else %}text-success{% endif %}">
+                                            {% if pred_prob %}{{ "%.1f"|format(pred_prob * 100) }}%{% else %}N/A{% endif %}
+                                        </strong>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <footer class="footer mt-5">
+        <div class="container">
+            <p>&copy; 2024 Credit Risk Evaluation System | Powered by 10 Machine Learning Models</p>
+            <small> SHAP Explainable AI | Best model selected by ROC-AUC | Class imbalance handled</small>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

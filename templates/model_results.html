@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Results - Credit Risk Evaluation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #1a2632;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .navbar-brand, .nav-link {
+            color: #ecf0f1 !important;
+        }
+        .nav-link:hover {
+            color: #3498db !important;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+            background: #ecf0f1;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #1a2632, #2c3e50);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 15px 20px;
+            font-weight: bold;
+        }
+        .footer {
+            background-color: #1a2632;
+            color: #ecf0f1;
+            text-align: center;
+            padding: 20px;
+            margin-top: 50px;
+        }
+        .table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .table thead {
+            background: linear-gradient(135deg, #1a2632, #2c3e50);
+            color: white;
+        }
+        .table tbody tr:hover {
+            background-color: #f0f0f0;
+        }
+        .best-model {
+            background-color: #d4edda !important;
+            border-left: 4px solid #28a745;
+        }
+        .visualization-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            color: #ecf0f1;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line"></i> CreditRisk Evaluator
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/model-results">Model Results</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/predict">Predict</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <h1 class="text-center text-white mb-4">
+            <i class="fas fa-chart-line"></i> Model Performance Comparison
+        </h1>
+        
+        <div class="row mb-3">
+            <div class="col-12 text-center">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    Successfully trained <strong>{{ num_models }}</strong> machine learning models on Lending Club data
+                </div>
+            </div>
+        </div>
+        
+        <!-- Model Metrics Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-table"></i> Model Performance Metrics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Model</th>
+                                        <th>Accuracy</th>
+                                        <th>Precision</th>
+                                        <th>Recall</th>
+                                        <th>F1-Score</th>
+                                        <th>ROC-AUC</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for name, metrics in results.items() %}
+                                    <tr {% if metrics['ROC-AUC'] == best_auc %}class="best-model"{% endif %}>
+                                        <td>
+                                            <strong>{{ name }}</strong>
+                                            {% if metrics['ROC-AUC'] == best_auc %}
+                                                <span class="badge bg-success ms-2">★ BEST</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ "%.4f"|format(metrics.Accuracy) }}</td>
+                                        <td>{{ "%.4f"|format(metrics.Precision) }}</td>
+                                        <td>{{ "%.4f"|format(metrics.Recall) }}</td>
+                                        <td>{{ "%.4f"|format(metrics['F1-Score']) }}</td>
+                                        <td><strong>{{ "%.4f"|format(metrics['ROC-AUC']) }}</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Confusion Matrices -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-th"></i> Confusion Matrices</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for name, cm_img in cm_images.items() %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card" style="background: white;">
+                                    <div class="card-body text-center">
+                                        <h6>{{ name }}</h6>
+                                        {% if cm_img %}
+                                        <img src="data:image/png;base64,{{ cm_img }}" 
+                                             class="visualization-img" 
+                                             alt="{{ name }} Confusion Matrix"
+                                             style="max-width: 100%; height: auto;">
+                                        {% else %}
+                                        <div class="alert alert-warning">
+                                            Confusion matrix not available
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ROC Curve -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-line"></i> ROC Curves Comparison</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        {% if roc_curve_img %}
+                        <img src="data:image/png;base64,{{ roc_curve_img }}" 
+                             class="visualization-img" 
+                             alt="ROC Curves"
+                             style="max-width: 100%; height: auto;">
+                        {% else %}
+                        <div class="alert alert-info">
+                            ROC curves will be displayed here
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feature Importance -->
+        {% if feature_importance_img %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Feature Importance - Random Forest</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="data:image/png;base64,{{ feature_importance_img }}" 
+                             class="visualization-img" 
+                             alt="Feature Importance"
+                             style="max-width: 100%; height: auto;">
+                        
+                        {% if feature_importance_data %}
+                        <div class="table-responsive mt-3">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Importance Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in feature_importance_data %}
+                                    <tr>
+                                        <td>{{ item.feature.replace('_', ' ').title() }}</td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar" style="width: {{ item.importance * 100 }}%">
+                                                    {{ "%.3f"|format(item.importance) }}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- SHAP Visualizations -->
+        {% if shap_summary_plot %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-simple"></i> SHAP Model Explanations</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">
+                            SHAP (SHapley Additive exPlanations) shows how each feature contributes to predictions.
+                            Red = higher feature value increases risk, Blue = higher feature value decreases risk.
+                        </p>
+                        
+                        <!-- SHAP Summary Plot -->
+                        <div class="mb-4">
+                            <h6><i class="fas fa-chart-scatter"></i> SHAP Summary Plot</h6>
+                            <p class="small text-muted">Shows how each feature affects predictions across all loans.</p>
+                            <img src="data:image/png;base64,{{ shap_summary_plot }}" class="visualization-img" alt="SHAP Summary Plot">
+                        </div>
+                        
+                        <!-- SHAP Bar Plot -->
+                        <div class="mb-4">
+                            <h6><i class="fas fa-chart-bar"></i> SHAP Bar Plot</h6>
+                            <p class="small text-muted">Shows the average absolute impact of each feature.</p>
+                            <img src="data:image/png;base64,{{ shap_bar_plot }}" class="visualization-img" alt="SHAP Bar Plot">
+                        </div>
+                        
+                        <!-- SHAP Force Plot -->
+                        {% if shap_force_plot %}
+                        <div class="mb-4">
+                            <h6><i class="fas fa-chart-line"></i> SHAP Force Plot (Example Prediction)</h6>
+                            <p class="small text-muted">Example explanation for a single loan prediction.</p>
+                            <div style="overflow-x: auto; background: white; border-radius: 10px; padding: 10px;">
+                                <img src="data:image/png;base64,{{ shap_force_plot }}" 
+                                     class="img-fluid" 
+                                     alt="SHAP Force Plot"
+                                     style="min-width: 800px; width: 100%;">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% elif shap_force_plot %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-simple"></i> SHAP Model Explanations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> SHAP visualizations will appear after training.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <footer class="footer mt-5">
+        <div class="container">
+            <p>&copy; 2024 Credit Risk Evaluation System | Powered by 10 Machine Learning Models</p>
+            <small> SHAP Explainable AI | Best model selected by ROC-AUC | Class imbalance handled</small>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

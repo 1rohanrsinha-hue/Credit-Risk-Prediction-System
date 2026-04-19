@@ -1,0 +1,3 @@
+cd /Users/rohansinha/Developer/Creditrisk
+source venv/bin/activate
+python3 app.py

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Risk Evaluation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #1a2632;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .navbar-brand, .nav-link {
+            color: #ecf0f1 !important;
+        }
+        .nav-link:hover {
+            color: #3498db !important;
+            transform: translateY(-2px);
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+            background: #ecf0f1;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #1a2632, #2c3e50);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
+            font-weight: bold;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            transition: transform 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1a2632, #2c3e50);
+            border: none;
+            padding: 10px 30px;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52,152,219,0.4);
+            background: linear-gradient(135deg, #2c3e50, #1a2632);
+        }
+        .footer {
+            background-color: #1a2632;
+            color: #ecf0f1;
+            text-align: center;
+            padding: 20px;
+            margin-top: 50px;
+        }
+        h1, h2, h3 {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        .model-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .model-category {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            height: 100%;
+            transition: transform 0.3s;
+        }
+        .model-category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .badge-removed {
+            background-color: #e74c3c;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line"></i> CreditRisk Evaluator
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/model-results">Model Results</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/predict">Predict</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-chart-line"></i> Credit Risk Assessment</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- Statistics Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <i class="fas fa-database fa-3x" style="color: #3498db;"></i>
+                                    <div class="stat-number">10</div>
+                                    <div>ML Models</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <i class="fas fa-chart-line fa-3x" style="color: #2ecc71;"></i>
+                                    <div class="stat-number">~75%</div>
+                                    <div>Best Accuracy</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <i class="fas fa-clock fa-3x" style="color: #e74c3c;"></i>
+                                    <div class="stat-number">Real-time</div>
+                                    <div>Instant Predictions</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <p class="lead">
+                            Our machine learning system analyzes loan applications using <strong>10 different models</strong>
+                            to provide accurate credit risk assessment for informed lending decisions.
+                        </p>
+                        
+                        <!-- Navigation Cards -->
+                        <div class="row mt-5">
+                            <div class="col-md-4">
+                                <div class="card h-100" style="background: white;">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chart-line feature-icon" style="color: #3498db;"></i>
+                                        <h5>Dashboard</h5>
+                                        <p>Explore data analytics and visualizations</p>
+                                        <a href="/dashboard" class="btn btn-primary btn-sm">View Dashboard</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100" style="background: white;">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chart-bar feature-icon" style="color: #9b59b6;"></i>
+                                        <h5>Model Results</h5>
+                                        <p>Compare 10 model performances & confusion matrices</p>
+                                        <a href="/model-results" class="btn btn-primary btn-sm">View Results</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100" style="background: white;">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-calculator feature-icon" style="color: #e74c3c;"></i>
+                                        <h5>Predict Risk</h5>
+                                        <p>Get instant credit risk assessment</p>
+                                        <a href="/predict" class="btn btn-primary btn-sm">Start Prediction</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Models Implemented Section -->
+                        <div class="mt-5 pt-3">
+                            <h4><i class="fas fa-microchip"></i> Models Implemented</h4>
+                            <p class="text-muted">10 high-performing machine learning algorithms for comprehensive comparison</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="model-category text-center">
+                                        <i class="fas fa-chart-line model-icon" style="color: #3498db;"></i>
+                                        <h6>Linear Models</h6>
+                                        <small class="text-muted">Logistic Regression</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="model-category text-center">
+                                        <i class="fas fa-code-branch model-icon" style="color: #2ecc71;"></i>
+                                        <h6>Tree-Based</h6>
+                                        <small class="text-muted">Decision Tree, Random Forest</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="model-category text-center">
+                                        <i class="fas fa-layer-group model-icon" style="color: #e74c3c;"></i>
+                                        <h6>Gradient Boosting</h6>
+                                        <small class="text-muted">Gradient Boosting, XGBoost, LightGBM, CatBoost</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="model-category text-center">
+                                        <i class="fas fa-brain model-icon" style="color: #9b59b6;"></i>
+                                        <h6>Neural Network</h6>
+                                        <small class="text-muted">MLP Classifier</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="model-category text-center">
+                                        <i class="fas fa-users model-icon" style="color: #f39c12;"></i>
+                                        <h6>Ensemble Methods</h6>
+                                        <small class="text-muted">AdaBoost, Extra Trees</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="model-category text-center">
+                                        <i class="fas fa-chart-simple model-icon" style="color: #1abc9c;"></i>
+                                        <h6>Feature Selection</h6>
+                                        <small class="text-muted">ANOVA, MI, RF, RFE</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                    
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer mt-5">
+        <div class="container">
+            <p>&copy; 2024 Credit Risk Evaluation System | Powered by 10 Machine Learning Models</p>
+            <small>Logistic Regression | Decision Tree | Random Forest | XGBoost | LightGBM | CatBoost | Gradient Boosting | AdaBoost | Extra Trees | Neural Network</small>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
